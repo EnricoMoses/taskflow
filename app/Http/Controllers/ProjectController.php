@@ -91,7 +91,7 @@ class ProjectController extends Controller
             'tasks as in_progress_tasks_count' => fn ($q) => $q->where('status', 'in_progress'),
             'tasks as todo_tasks_count' => fn ($q) => $q->where('status', 'todo'),
         ])->load([
-            'tasks' => fn ($q) => $q->withCount('attachments')->orderBy('order')->orderByDesc('created_at'),
+            'tasks' => fn ($q) => $q->with('attachments')->withCount('attachments')->orderBy('order')->orderByDesc('created_at'),
         ]);
 
         return Inertia::render('Projects/Show', [

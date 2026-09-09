@@ -38,7 +38,8 @@ class TaskResource extends JsonResource
             'priority' => $this->priority instanceof TaskPriority ? $this->priority->value : $this->priority,
             'priority_label' => $this->priority instanceof TaskPriority ? $this->priority->label() : ucfirst((string) $this->priority),
             'order' => $this->order ?? 0,
-            'attachments_count' => $this->attachments_count ?? 0,
+            'attachments_count' => $this->attachments_count ?? ($this->relationLoaded('attachments') ? $this->attachments->count() : 0),
+            'attachments' => TaskAttachmentResource::collection($this->whenLoaded('attachments')),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

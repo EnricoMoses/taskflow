@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\TaskAttachment;
 use App\Policies\ProjectPolicy;
 use App\Policies\TaskPolicy;
+use App\Policies\TaskAttachmentPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
@@ -29,5 +31,6 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(Project::class, ProjectPolicy::class);
         Gate::policy(Task::class, TaskPolicy::class);
+        Gate::policy(TaskAttachment::class, TaskAttachmentPolicy::class);
     }
 }

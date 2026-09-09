@@ -1,6 +1,8 @@
 import { Task } from '@/types/task';
 import TaskStatusBadge from '@/Components/Tasks/TaskStatusBadge';
 import TaskPriorityBadge from '@/Components/Tasks/TaskPriorityBadge';
+import TaskAttachmentUpload from '@/Components/Tasks/TaskAttachmentUpload';
+import TaskAttachmentList from '@/Components/Tasks/TaskAttachmentList';
 import {
     Sheet,
     SheetContent,
@@ -16,7 +18,6 @@ import {
     Edit,
     Trash2,
     AlertTriangle,
-    CheckCircle2,
     FileText,
 } from 'lucide-react';
 
@@ -38,6 +39,8 @@ export default function TaskDetailSheet({
     onDelete,
 }: TaskDetailSheetProps) {
     if (!task) return null;
+
+    const attachments = task.attachments || [];
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
@@ -77,7 +80,7 @@ export default function TaskDetailSheet({
                                     Tenggat Waktu
                                 </span>
                                 <p className={`font-semibold ${task.is_overdue ? 'text-destructive' : 'text-foreground'}`}>
-                                    {task.deadline_formatted || 'Tidak ada tenggat'}
+                                    {task.deadline_formatted || 'Tanpa tenggat'}
                                 </p>
                             </div>
 
@@ -87,7 +90,7 @@ export default function TaskDetailSheet({
                                     Lampiran File
                                 </span>
                                 <p className="font-semibold text-foreground">
-                                    {task.attachments_count} File
+                                    {attachments.length} File
                                 </p>
                             </div>
                         </div>
@@ -98,27 +101,30 @@ export default function TaskDetailSheet({
                                 <FileText className="size-3.5 text-primary" />
                                 Deskripsi Tugas
                             </h4>
-                            <div className="p-4 rounded-2xl bg-background border border-border/60 text-sm text-foreground leading-relaxed whitespace-pre-wrap min-h-[5rem]">
+                            <div className="p-4 rounded-2xl bg-background border border-border/60 text-sm text-foreground leading-relaxed whitespace-pre-wrap min-h-[4rem]">
                                 {task.description || (
-                                    <span className="text-muted-foreground italic">
+                                    <span className="text-muted-foreground italic text-xs">
                                         Tidak ada deskripsi tambahan untuk tugas ini.
                                     </span>
                                 )}
                             </div>
                         </div>
 
-                        {/* Attachments Section Preview */}
-                        <div className="space-y-2">
-                            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                                <Paperclip className="size-3.5 text-primary" />
-                                Lampiran ({task.attachments_count})
-                            </h4>
-                            <div className="p-4 rounded-2xl border border-dashed border-border text-center text-xs text-muted-foreground bg-muted/10">
-                                {task.attachments_count > 0 ? (
-                                    <p className="font-medium text-foreground">{task.attachments_count} file terlampir</p>
-                                ) : (
-                                    <p>Belum ada file lampiran pada tugas ini.</p>
-                                )}
+                        {/* Attachments Upload & List Section */}
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                    <Paperclip className="size-3.5 text-primary" />
+                                    Lampiran File ({attachments.length})
+                                </h4>
+                            </div>
+
+                            {/* Upload Area */}
+                            <TaskAttachmentUpload taskId={task.id} />
+
+                            {/* Attachments List */}
+                            <div className="pt-2">
+                                <TaskAttachmentList attachments={attachments} />
                             </div>
                         </div>
                     </div>

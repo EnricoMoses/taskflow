@@ -61,6 +61,16 @@ In order to ensure that the Laravel community is welcoming to all, please review
 
 If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
+## File Upload Configuration
+
+Aplikasi mendukung upload lampiran file tugas hingga **10 MB** (ekstensi yang didukung: `pdf, doc, docx, xls, xlsx, png, jpg, jpeg, zip`).
+Pastikan konfigurasi PHP (`php.ini`) pada server/hosting Anda memenuhi kapasitas minimal:
+```ini
+upload_max_filesize = 10M
+post_max_size = 12M
+memory_limit = 256M
+```
+
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The TaskFlow application is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

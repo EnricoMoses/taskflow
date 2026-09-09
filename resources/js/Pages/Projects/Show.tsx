@@ -52,7 +52,7 @@ export default function Show({ project }: ProjectShowProps) {
     const [defaultTaskStatus, setDefaultTaskStatus] = useState<TaskStatusType>('todo');
 
     const [detailSheetOpen, setDetailSheetOpen] = useState(false);
-    const [detailTask, setDetailTask] = useState<Task | null>(null);
+    const [detailTaskId, setDetailTaskId] = useState<number | null>(null);
 
     const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
     const [isDeletingTask, setIsDeletingTask] = useState(false);
@@ -65,6 +65,8 @@ export default function Show({ project }: ProjectShowProps) {
     const todoTasks = allTasks.filter((t) => t.status === 'todo');
     const inProgressTasks = allTasks.filter((t) => t.status === 'in_progress');
     const doneTasks = allTasks.filter((t) => t.status === 'done');
+
+    const detailTask = allTasks.find((t) => t.id === detailTaskId) || null;
 
     const handleDeleteProject = () => {
         setIsDeletingProject(true);
@@ -88,7 +90,7 @@ export default function Show({ project }: ProjectShowProps) {
     };
 
     const handleViewTaskDetail = (task: Task) => {
-        setDetailTask(task);
+        setDetailTaskId(task.id);
         setDetailSheetOpen(true);
     };
 

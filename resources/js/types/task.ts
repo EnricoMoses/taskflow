@@ -1,3 +1,5 @@
+import { TaskAttachment } from '@/types/attachment';
+
 export type TaskStatusType = 'todo' | 'in_progress' | 'done';
 export type TaskPriorityType = 'low' | 'medium' | 'high';
 
@@ -16,6 +18,7 @@ export interface Task {
     priority_label: string;
     order: number;
     attachments_count: number;
+    attachments?: TaskAttachment[];
     created_at: string;
     updated_at: string;
 }
