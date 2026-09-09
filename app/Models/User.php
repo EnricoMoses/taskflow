@@ -45,4 +45,14 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Get the projects owned by the user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Models\Project, $this>
+     */
+    public function projects(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\Project::class);
+    }
 }
