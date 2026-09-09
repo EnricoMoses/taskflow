@@ -45,6 +45,7 @@ class ProjectResource extends JsonResource
             'in_progress_tasks_count' => $inProgressTasksCount,
             'todo_tasks_count' => $todoTasksCount,
             'progress_percentage' => $progressPercentage,
+            'tasks' => TaskResource::collection($this->whenLoaded('tasks')),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

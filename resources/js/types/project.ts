@@ -1,3 +1,5 @@
+import { Task } from '@/types/task';
+
 export type ProjectStatusType = 'planning' | 'in_progress' | 'completed' | 'on_hold';
 
 export interface ProjectStatusOption {
@@ -20,6 +22,7 @@ export interface Project {
     in_progress_tasks_count: number;
     todo_tasks_count: number;
     progress_percentage: number;
+    tasks?: Task[];
     created_at: string;
     updated_at: string;
 }
