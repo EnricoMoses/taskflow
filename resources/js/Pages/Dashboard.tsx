@@ -8,7 +8,7 @@ import ProjectStatusBadge from '@/Components/Projects/ProjectStatusBadge';
 import TaskPriorityBadge from '@/Components/Tasks/TaskPriorityBadge';
 import TaskStatusBadge from '@/Components/Tasks/TaskStatusBadge';
 import ProjectDialog from '@/Components/Projects/ProjectDialog';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/Components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Button } from '@/Components/ui/button';
 import { Progress } from '@/Components/ui/progress';
 import {
@@ -35,7 +35,8 @@ import {
     RotateCw,
     TrendingUp,
     LayoutGrid,
-    Sparkles,
+    PieChart as PieChartIcon,
+    Inbox,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -84,11 +85,11 @@ export default function Dashboard({
         });
     };
 
-    // Custom colors matching reference style (Green / Yellow-Amber / Coral-Red)
+    // Colors matching reference style (Green / Yellow-Amber / Coral-Red)
     const taskStatusColors: Record<string, string> = {
-        done: '#10b981',       // Emerald Green (Diterima / Selesai)
-        in_progress: '#f59e0b',// Amber Yellow (Menunggu / Dikerjakan)
-        todo: '#ef4444',       // Coral Red (Ditolak / Belum Mulai)
+        done: '#10b981',       // Emerald Green
+        in_progress: '#f59e0b',// Golden Amber
+        todo: '#ef4444',       // Coral Red
     };
 
     const formattedTaskDistribution = task_distribution.map((item) => ({
@@ -140,7 +141,7 @@ export default function Dashboard({
             <Head title="Dashboard - TaskFlow" />
 
             <div className="space-y-6 sm:space-y-8">
-                {/* Greeting & Quick Action Row (Inspired by Reference) */}
+                {/* Greeting & Quick Action Row */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="space-y-1">
                         <h1 className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
@@ -169,7 +170,7 @@ export default function Dashboard({
                             className="rounded-2xl gap-2 text-xs sm:text-sm font-medium h-10 px-4 border-border/80 bg-card hover:bg-muted/80 shadow-xs"
                             render={
                                 <Link href={route('tasks.index')}>
-                                    <Plus className="size-4" />
+                                    <ListTodo className="size-4" />
                                     Semua Tugas
                                 </Link>
                             }
@@ -187,10 +188,10 @@ export default function Dashboard({
                     </div>
                 </div>
 
-                {/* 4 Summary Stat Cards (Exact Layout & Aesthetics from Image 1) */}
+                {/* 4 Summary Stat Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
                     {/* Card 1: Total Proyek */}
-                    <div className="bg-card rounded-2xl border border-border/70 p-5 shadow-xs flex items-center gap-4 hover:border-blue-500/40 transition-colors">
+                    <div className="bg-card rounded-2xl border border-border/80 p-5 shadow-xs flex items-center gap-4 hover:border-blue-500/40 transition-colors">
                         <div className="size-12 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                             <FolderKanban className="size-6" />
                         </div>
@@ -205,7 +206,7 @@ export default function Dashboard({
                     </div>
 
                     {/* Card 2: Total Tugas */}
-                    <div className="bg-card rounded-2xl border border-border/70 p-5 shadow-xs flex items-center gap-4 hover:border-purple-500/40 transition-colors">
+                    <div className="bg-card rounded-2xl border border-border/80 p-5 shadow-xs flex items-center gap-4 hover:border-purple-500/40 transition-colors">
                         <div className="size-12 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
                             <ListTodo className="size-6" />
                         </div>
@@ -220,7 +221,7 @@ export default function Dashboard({
                     </div>
 
                     {/* Card 3: Tugas Selesai */}
-                    <div className="bg-card rounded-2xl border border-border/70 p-5 shadow-xs flex items-center gap-4 hover:border-emerald-500/40 transition-colors">
+                    <div className="bg-card rounded-2xl border border-border/80 p-5 shadow-xs flex items-center gap-4 hover:border-emerald-500/40 transition-colors">
                         <div className="size-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                             <CheckCircle2 className="size-6" />
                         </div>
@@ -235,7 +236,7 @@ export default function Dashboard({
                     </div>
 
                     {/* Card 4: Tugas Terlambat */}
-                    <div className="bg-card rounded-2xl border border-border/70 p-5 shadow-xs flex items-center gap-4 hover:border-amber-500/40 transition-colors">
+                    <div className="bg-card rounded-2xl border border-border/80 p-5 shadow-xs flex items-center gap-4 hover:border-amber-500/40 transition-colors">
                         <div className={cn(
                             "size-12 rounded-2xl flex items-center justify-center shrink-0",
                             summary.overdue_tasks > 0 
@@ -258,20 +259,24 @@ export default function Dashboard({
                     </div>
                 </div>
 
-                {/* 2-Column Charts Section (Matching Donut & Bar Chart from Image 1) */}
+                {/* 2-Column Charts Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Chart 1: Distribusi Status Tugas (Donut Chart with Center Total) */}
-                    <Card className="rounded-2xl border border-border/70 bg-card shadow-xs">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-base font-heading font-bold text-foreground flex items-center gap-2">
-                                <Clock className="size-4.5 text-muted-foreground" />
-                                Distribusi Status Tugas
-                            </CardTitle>
+                    {/* Chart 1: Distribusi Status Tugas */}
+                    <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden">
+                        <CardHeader className="p-5 sm:p-6 pb-2">
+                            <div className="flex items-center gap-2.5">
+                                <div className="size-8 rounded-xl bg-muted/70 flex items-center justify-center text-muted-foreground">
+                                    <Clock className="size-4" />
+                                </div>
+                                <CardTitle className="text-base font-heading font-bold text-foreground">
+                                    Distribusi Status Tugas
+                                </CardTitle>
+                            </div>
                         </CardHeader>
-                        <CardContent className="pt-2">
+                        <CardContent className="p-5 sm:p-6 pt-2">
                             {hasTasks ? (
-                                <div className="flex flex-col items-center justify-center py-4">
-                                    <div className="relative size-60 flex items-center justify-center">
+                                <div className="flex flex-col items-center justify-center py-2">
+                                    <div className="relative size-56 flex items-center justify-center">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
                                                 <RechartsTooltip content={<CustomPieTooltip />} />
@@ -279,8 +284,8 @@ export default function Dashboard({
                                                     data={formattedTaskDistribution}
                                                     cx="50%"
                                                     cy="50%"
-                                                    innerRadius={65}
-                                                    outerRadius={92}
+                                                    innerRadius={62}
+                                                    outerRadius={88}
                                                     paddingAngle={3}
                                                     dataKey="count"
                                                 >
@@ -298,8 +303,8 @@ export default function Dashboard({
                                         </div>
                                     </div>
 
-                                    {/* Horizontal Color Legend matching reference */}
-                                    <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-4 pt-2 border-t border-border/40 w-full">
+                                    {/* Horizontal Color Legend */}
+                                    <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-4 pt-3 border-t border-border/50 w-full">
                                         <div className="flex items-center gap-2 text-xs">
                                             <span className="size-3 rounded-xs bg-[#10b981]" />
                                             <span className="text-muted-foreground font-medium">Selesai</span>
@@ -315,25 +320,34 @@ export default function Dashboard({
                                     </div>
                                 </div>
                             ) : (
-                                <div className="h-64 flex flex-col items-center justify-center text-center space-y-2 text-muted-foreground">
-                                    <ListTodo className="size-8 opacity-40" />
-                                    <p className="text-xs">Belum ada data tugas untuk ditampilkan.</p>
+                                <div className="h-56 flex flex-col items-center justify-center text-center p-6 space-y-3 text-muted-foreground">
+                                    <div className="size-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground/70">
+                                        <ListTodo className="size-6" />
+                                    </div>
+                                    <p className="text-sm font-medium text-foreground/80">Belum ada data tugas untuk ditampilkan.</p>
+                                    <p className="text-xs text-muted-foreground max-w-xs">
+                                        Buat tugas baru di dalam proyek Anda untuk melihat pembagian status pengerjaan.
+                                    </p>
                                 </div>
                             )}
                         </CardContent>
                     </Card>
 
-                    {/* Chart 2: Distribusi Status Proyek (Horizontal Bar Chart matching Image 1) */}
-                    <Card className="rounded-2xl border border-border/70 bg-card shadow-xs">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-base font-heading font-bold text-foreground flex items-center gap-2">
-                                <TrendingUp className="size-4.5 text-muted-foreground" />
-                                Distribusi Status Proyek
-                            </CardTitle>
+                    {/* Chart 2: Distribusi Status Proyek */}
+                    <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden">
+                        <CardHeader className="p-5 sm:p-6 pb-2">
+                            <div className="flex items-center gap-2.5">
+                                <div className="size-8 rounded-xl bg-muted/70 flex items-center justify-center text-muted-foreground">
+                                    <TrendingUp className="size-4" />
+                                </div>
+                                <CardTitle className="text-base font-heading font-bold text-foreground">
+                                    Distribusi Status Proyek
+                                </CardTitle>
+                            </div>
                         </CardHeader>
-                        <CardContent className="pt-2">
+                        <CardContent className="p-5 sm:p-6 pt-2">
                             {hasProjects ? (
-                                <div className="h-64 w-full pt-2">
+                                <div className="h-56 w-full pt-2">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart
                                             layout="vertical"
@@ -363,34 +377,48 @@ export default function Dashboard({
                                                 dataKey="count" 
                                                 fill="#0891b2" 
                                                 radius={[0, 6, 6, 0]}
-                                                barSize={20}
+                                                barSize={18}
                                             />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
                             ) : (
-                                <div className="h-64 flex flex-col items-center justify-center text-center space-y-2 text-muted-foreground">
-                                    <FolderKanban className="size-8 opacity-40" />
-                                    <p className="text-xs">Belum ada proyek untuk ditampilkan.</p>
+                                <div className="h-56 flex flex-col items-center justify-center text-center p-6 space-y-3 text-muted-foreground">
+                                    <div className="size-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground/70">
+                                        <FolderKanban className="size-6" />
+                                    </div>
+                                    <p className="text-sm font-medium text-foreground/80">Belum ada proyek untuk ditampilkan.</p>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => setProjectDialogOpen(true)}
+                                        className="rounded-xl text-xs gap-1.5 h-8 px-3"
+                                    >
+                                        <Plus className="size-3.5" />
+                                        Buat Proyek Baru
+                                    </Button>
                                 </div>
                             )}
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Bottom 2-Column Lists: Tenggat Waktu & Proyek Terbaru (matching Image 1) */}
+                {/* Bottom 2-Column Lists: Tenggat Waktu & Proyek Terbaru */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Left Column: Tenggat Waktu Terdekat */}
-                    <Card className="rounded-2xl border border-border/70 bg-card shadow-xs">
-                        <CardHeader className="flex flex-row items-center justify-between pb-3">
-                            <CardTitle className="text-base font-heading font-bold text-foreground flex items-center gap-2">
-                                <Clock className="size-4.5 text-muted-foreground" />
-                                Tenggat Waktu Terdekat
-                            </CardTitle>
+                    <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden">
+                        <CardHeader className="p-5 sm:p-6 pb-3 flex flex-row items-center justify-between border-b border-border/40">
+                            <div className="flex items-center gap-2.5">
+                                <div className="size-8 rounded-xl bg-muted/70 flex items-center justify-center text-muted-foreground">
+                                    <Clock className="size-4" />
+                                </div>
+                                <CardTitle className="text-base font-heading font-bold text-foreground">
+                                    Tenggat Waktu Terdekat
+                                </CardTitle>
+                            </div>
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-xs text-primary hover:text-primary/80 gap-1 rounded-xl h-8"
+                                className="text-xs text-primary hover:text-primary/80 gap-1 rounded-xl h-8 px-2.5"
                                 render={
                                     <Link href={route('tasks.index')}>
                                         Lihat Semua <ArrowRight className="size-3" />
@@ -398,7 +426,7 @@ export default function Dashboard({
                                 }
                             />
                         </CardHeader>
-                        <CardContent className="pt-0">
+                        <CardContent className="p-5 sm:p-6 pt-4">
                             {upcoming_tasks.length > 0 ? (
                                 <div className="divide-y divide-border/60">
                                     {upcoming_tasks.map((task) => (
@@ -434,25 +462,32 @@ export default function Dashboard({
                                     ))}
                                 </div>
                             ) : (
-                                <div className="py-8 text-center text-xs text-muted-foreground space-y-1">
-                                    <CheckCircle2 className="size-6 mx-auto opacity-40 text-emerald-500" />
-                                    <p>Tidak ada tugas mendekati tenggat saat ini.</p>
+                                <div className="py-10 flex flex-col items-center justify-center text-center space-y-2 text-muted-foreground">
+                                    <div className="size-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                        <CheckCircle2 className="size-5" />
+                                    </div>
+                                    <p className="text-sm font-medium text-foreground/80">Tidak ada tugas mendekati tenggat saat ini.</p>
+                                    <p className="text-xs text-muted-foreground">Semua jadwal dan tenggat waktu tugas Anda terkontrol dengan baik.</p>
                                 </div>
                             )}
                         </CardContent>
                     </Card>
 
                     {/* Right Column: Proyek Terbaru */}
-                    <Card className="rounded-2xl border border-border/70 bg-card shadow-xs">
-                        <CardHeader className="flex flex-row items-center justify-between pb-3">
-                            <CardTitle className="text-base font-heading font-bold text-foreground flex items-center gap-2">
-                                <FolderKanban className="size-4.5 text-muted-foreground" />
-                                Proyek Terbaru
-                            </CardTitle>
+                    <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden">
+                        <CardHeader className="p-5 sm:p-6 pb-3 flex flex-row items-center justify-between border-b border-border/40">
+                            <div className="flex items-center gap-2.5">
+                                <div className="size-8 rounded-xl bg-muted/70 flex items-center justify-center text-muted-foreground">
+                                    <FolderKanban className="size-4" />
+                                </div>
+                                <CardTitle className="text-base font-heading font-bold text-foreground">
+                                    Proyek Terbaru
+                                </CardTitle>
+                            </div>
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-xs text-primary hover:text-primary/80 gap-1 rounded-xl h-8"
+                                className="text-xs text-primary hover:text-primary/80 gap-1 rounded-xl h-8 px-2.5"
                                 render={
                                     <Link href={route('projects.index')}>
                                         Lihat Semua <ArrowRight className="size-3" />
@@ -460,7 +495,7 @@ export default function Dashboard({
                                 }
                             />
                         </CardHeader>
-                        <CardContent className="pt-0">
+                        <CardContent className="p-5 sm:p-6 pt-4">
                             {recent_projects.length > 0 ? (
                                 <div className="divide-y divide-border/60">
                                     {recent_projects.map((project) => (
@@ -503,9 +538,19 @@ export default function Dashboard({
                                     ))}
                                 </div>
                             ) : (
-                                <div className="py-8 text-center text-xs text-muted-foreground space-y-1">
-                                    <FolderKanban className="size-6 mx-auto opacity-40 text-primary" />
-                                    <p>Belum ada proyek yang dibuat.</p>
+                                <div className="py-10 flex flex-col items-center justify-center text-center space-y-3 text-muted-foreground">
+                                    <div className="size-10 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                                        <FolderKanban className="size-5" />
+                                    </div>
+                                    <p className="text-sm font-medium text-foreground/80">Belum ada proyek yang dibuat.</p>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => setProjectDialogOpen(true)}
+                                        className="rounded-xl text-xs gap-1.5 h-8 px-3"
+                                    >
+                                        <Plus className="size-3.5" />
+                                        Mulai Buat Proyek
+                                    </Button>
                                 </div>
                             )}
                         </CardContent>
