@@ -268,7 +268,10 @@ export default function TasksIndex({
 
                     <div className="flex items-center gap-2">
                         {projects.length > 0 && (
-                            <Button onClick={handleCreateTask} className="rounded-xl gap-2 shadow-sm">
+                            <Button 
+                                onClick={handleCreateTask} 
+                                className="rounded-2xl gap-2 text-xs sm:text-sm font-medium h-10 px-4 bg-foreground text-background hover:bg-foreground/90 shadow-xs cursor-pointer"
+                            >
                                 <Plus className="size-4" />
                                 Tambah Tugas
                             </Button>
@@ -277,21 +280,21 @@ export default function TasksIndex({
                 </div>
 
                 {/* Filters Section */}
-                <div className="bg-card border border-border/70 rounded-2xl p-4 shadow-xs space-y-3">
+                <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-xs space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                         {/* Search Input */}
                         <div className="relative lg:col-span-2">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
                             <Input
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 placeholder="Cari judul atau deskripsi tugas..."
-                                className="pl-9 pr-8 h-9 rounded-xl text-sm border-border/80"
+                                className="pl-10 pr-8 h-10 rounded-2xl text-xs sm:text-sm border-border/80 bg-background"
                             />
                             {search && (
                                 <button
                                     onClick={() => setSearch('')}
-                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
                                 >
                                     <X className="size-3.5" />
                                 </button>
@@ -301,13 +304,13 @@ export default function TasksIndex({
                         {/* Project Filter */}
                         <div>
                             <Select value={projectId} onValueChange={handleProjectChange}>
-                                <SelectTrigger className="h-9 rounded-xl text-xs sm:text-sm border-border/80 w-full">
+                                <SelectTrigger className="h-10 rounded-2xl text-xs sm:text-sm border-border/80 bg-background w-full">
                                     <div className="flex items-center gap-2 truncate">
                                         <FolderKanban className="size-3.5 text-muted-foreground shrink-0" />
                                         <SelectValue placeholder="Semua Proyek" />
                                     </div>
                                 </SelectTrigger>
-                                <SelectContent className="rounded-xl">
+                                <SelectContent className="rounded-2xl">
                                     <SelectItem value="all">Semua Proyek</SelectItem>
                                     {projects.map((p) => (
                                         <SelectItem key={p.id} value={String(p.id)}>
@@ -321,13 +324,13 @@ export default function TasksIndex({
                         {/* Status Filter */}
                         <div>
                             <Select value={status} onValueChange={handleStatusChange}>
-                                <SelectTrigger className="h-9 rounded-xl text-xs sm:text-sm border-border/80 w-full">
+                                <SelectTrigger className="h-10 rounded-2xl text-xs sm:text-sm border-border/80 bg-background w-full">
                                     <div className="flex items-center gap-2 truncate">
                                         <Filter className="size-3.5 text-muted-foreground shrink-0" />
                                         <SelectValue placeholder="Semua Status" />
                                     </div>
                                 </SelectTrigger>
-                                <SelectContent className="rounded-xl">
+                                <SelectContent className="rounded-2xl">
                                     <SelectItem value="all">Semua Status</SelectItem>
                                     {statuses.map((s) => (
                                         <SelectItem key={s.value} value={s.value}>
@@ -341,10 +344,10 @@ export default function TasksIndex({
                         {/* Priority Filter */}
                         <div>
                             <Select value={priority} onValueChange={handlePriorityChange}>
-                                <SelectTrigger className="h-9 rounded-xl text-xs sm:text-sm border-border/80 w-full">
+                                <SelectTrigger className="h-10 rounded-2xl text-xs sm:text-sm border-border/80 bg-background w-full">
                                     <SelectValue placeholder="Semua Prioritas" />
                                 </SelectTrigger>
-                                <SelectContent className="rounded-xl">
+                                <SelectContent className="rounded-2xl">
                                     <SelectItem value="all">Semua Prioritas</SelectItem>
                                     {priorities.map((p) => (
                                         <SelectItem key={p.value} value={p.value}>

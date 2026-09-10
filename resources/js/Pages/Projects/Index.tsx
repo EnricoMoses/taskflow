@@ -28,10 +28,9 @@ import {
     Search, 
     FolderKanban, 
     Filter, 
-    CheckCircle2, 
-    Clock, 
     AlertTriangle,
-    X
+    X,
+    RotateCcw
 } from 'lucide-react';
 
 interface ProjectsIndexProps {
@@ -112,20 +111,15 @@ export default function Index({
 
     const hasActiveFilters = search !== '' || statusFilter !== 'all';
 
-    // Summary statistics
-    const totalProjects = projects.length;
-    const completedProjects = projects.filter((p) => p.status === 'completed').length;
-    const overdueProjects = projects.filter((p) => p.is_overdue).length;
-
     return (
         <AuthenticatedLayout>
             <Head title="Manajemen Proyek - TaskFlow" />
 
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8">
                 {/* Page Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="space-y-1">
-                        <h1 className="font-heading text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                        <h1 className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
                             Proyek
                         </h1>
                         <p className="text-sm text-muted-foreground">
@@ -135,7 +129,7 @@ export default function Index({
 
                     <Button
                         onClick={handleCreateClick}
-                        className="rounded-xl shadow-sm gap-2 shrink-0 self-start sm:self-auto"
+                        className="rounded-2xl gap-2 text-xs sm:text-sm font-medium h-10 px-4 bg-foreground text-background hover:bg-foreground/90 shadow-xs shrink-0 self-start sm:self-auto cursor-pointer"
                     >
                         <Plus className="size-4" />
                         Buat Proyek Baru
@@ -143,7 +137,7 @@ export default function Index({
                 </div>
 
                 {/* Filters & Quick Search Bar */}
-                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 bg-card p-3.5 rounded-2xl border border-border/70 shadow-sm">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 bg-card p-3 sm:p-3.5 rounded-2xl border border-border/80 shadow-xs">
                     {/* Search Input */}
                     <div className="relative flex-1">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -151,12 +145,12 @@ export default function Index({
                             placeholder="Cari nama atau deskripsi proyek..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="pl-10 pr-9 rounded-xl border-border bg-background"
+                            className="pl-10 pr-9 h-10 rounded-2xl border-border/80 bg-background text-xs sm:text-sm"
                         />
                         {search && (
                             <button
                                 onClick={() => setSearch('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                             >
                                 <X className="size-4" />
                             </button>
@@ -165,18 +159,18 @@ export default function Index({
 
                     {/* Status Filter */}
                     <div className="flex items-center gap-2">
-                        <div className="w-full md:w-48">
+                        <div className="w-full md:w-52">
                             <Select
                                 value={statusFilter}
                                 onValueChange={(val) => setStatusFilter(val || 'all')}
                             >
-                                <SelectTrigger className="rounded-xl bg-background border-border">
+                                <SelectTrigger className="h-10 rounded-2xl bg-background border-border/80 text-xs sm:text-sm">
                                     <div className="flex items-center gap-2 truncate">
-                                        <Filter className="size-3.5 text-muted-foreground" />
+                                        <Filter className="size-3.5 text-muted-foreground shrink-0" />
                                         <SelectValue placeholder="Semua Status" />
                                     </div>
                                 </SelectTrigger>
-                                <SelectContent className="rounded-xl">
+                                <SelectContent className="rounded-2xl">
                                     <SelectItem value="all">Semua Status</SelectItem>
                                     {statuses.map((st) => (
                                         <SelectItem key={st.value} value={st.value}>
@@ -192,8 +186,9 @@ export default function Index({
                                 variant="ghost"
                                 size="sm"
                                 onClick={resetFilters}
-                                className="rounded-xl text-xs text-muted-foreground hover:text-foreground px-2.5"
+                                className="h-10 rounded-2xl text-xs text-muted-foreground hover:text-foreground px-3 gap-1.5"
                             >
+                                <RotateCcw className="size-3.5" />
                                 Reset
                             </Button>
                         )}
@@ -202,7 +197,7 @@ export default function Index({
 
                 {/* Projects Grid or Empty State */}
                 {projects.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
                         {projects.map((project) => (
                             <ProjectCard
                                 key={project.id}
@@ -213,12 +208,12 @@ export default function Index({
                         ))}
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center p-12 text-center rounded-3xl border border-dashed border-border bg-muted/10 space-y-4">
-                        <div className="size-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                    <div className="bg-card rounded-2xl border border-border/80 p-8 sm:p-14 text-center shadow-xs flex flex-col items-center justify-center space-y-4 max-w-xl mx-auto my-4">
+                        <div className="size-14 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-xs">
                             <FolderKanban className="size-7" />
                         </div>
                         <div className="space-y-1.5 max-w-sm">
-                            <h3 className="font-heading font-semibold text-lg text-foreground">
+                            <h3 className="font-heading font-bold text-lg text-foreground">
                                 {hasActiveFilters ? 'Tidak ada proyek yang sesuai' : 'Belum ada proyek'}
                             </h3>
                             <p className="text-sm text-muted-foreground">
@@ -231,14 +226,14 @@ export default function Index({
                             <Button
                                 variant="outline"
                                 onClick={resetFilters}
-                                className="rounded-xl mt-2"
+                                className="rounded-2xl h-10 px-5 mt-2 text-xs sm:text-sm font-medium border-border/80"
                             >
                                 Hapus Filter
                             </Button>
                         ) : (
                             <Button
                                 onClick={handleCreateClick}
-                                className="rounded-xl mt-2 gap-2"
+                                className="rounded-2xl h-10 px-5 mt-2 gap-2 text-xs sm:text-sm font-medium bg-foreground text-background hover:bg-foreground/90 shadow-xs cursor-pointer"
                             >
                                 <Plus className="size-4" />
                                 Buat Proyek Pertama
@@ -277,14 +272,14 @@ export default function Index({
                     <AlertDialogFooter className="pt-3">
                         <AlertDialogCancel
                             disabled={isDeleting}
-                            className="rounded-xl"
+                            className="rounded-2xl h-10 px-4"
                         >
                             Batal
                         </AlertDialogCancel>
                         <AlertDialogAction
                             onClick={confirmDelete}
                             disabled={isDeleting}
-                            className="rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                            className="rounded-2xl h-10 px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                         >
                             {isDeleting ? 'Menghapus...' : 'Ya, Hapus Proyek'}
                         </AlertDialogAction>

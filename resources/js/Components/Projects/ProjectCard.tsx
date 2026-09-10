@@ -34,7 +34,7 @@ export default function ProjectCard({
     onDelete,
 }: ProjectCardProps) {
     return (
-        <Card className="group relative flex flex-col justify-between rounded-2xl border border-border/70 bg-card hover:shadow-md hover:border-primary/30 transition-all duration-200">
+        <Card className="group relative flex flex-col justify-between rounded-2xl border border-border/80 bg-card hover:border-blue-500/40 hover:shadow-sm transition-all duration-200 overflow-hidden">
             <div>
                 {/* Card Header: Title & Actions */}
                 <CardHeader className="p-5 pb-3">
@@ -64,16 +64,16 @@ export default function ProjectCard({
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="size-8 rounded-lg text-muted-foreground hover:text-foreground shrink-0"
+                                        className="size-8 rounded-xl text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
                                     >
                                         <MoreVertical className="size-4" />
                                         <span className="sr-only">Menu Opsi</span>
                                     </Button>
                                 }
                             />
-                            <DropdownMenuContent align="end" className="w-48 rounded-xl p-1.5 shadow-lg">
+                            <DropdownMenuContent align="end" className="w-48 rounded-2xl p-1.5 shadow-xl">
                                 <DropdownMenuItem
-                                    className="cursor-pointer rounded-lg"
+                                    className="cursor-pointer rounded-xl"
                                     render={
                                         <Link href={route('projects.show', project.id)} className="flex items-center gap-2">
                                             <Kanban className="size-4 text-muted-foreground" />
@@ -83,7 +83,7 @@ export default function ProjectCard({
                                 />
                                 <DropdownMenuItem
                                     onClick={() => onEdit(project)}
-                                    className="cursor-pointer rounded-lg flex items-center gap-2"
+                                    className="cursor-pointer rounded-xl flex items-center gap-2"
                                 >
                                     <Edit className="size-4 text-muted-foreground" />
                                     Edit Proyek
@@ -92,7 +92,7 @@ export default function ProjectCard({
                                 <DropdownMenuItem
                                     onClick={() => onDelete(project)}
                                     variant="destructive"
-                                    className="cursor-pointer rounded-lg text-destructive focus:text-destructive flex items-center gap-2"
+                                    className="cursor-pointer rounded-xl text-destructive focus:text-destructive flex items-center gap-2"
                                 >
                                     <Trash2 className="size-4" />
                                     Hapus Proyek
@@ -119,13 +119,13 @@ export default function ProjectCard({
                                 {project.progress_percentage}% ({project.completed_tasks_count}/{project.tasks_count})
                             </span>
                         </div>
-                        <Progress value={project.progress_percentage} className="h-2 rounded-full" />
+                        <Progress value={project.progress_percentage} className="h-1.5 rounded-full" />
                     </div>
                 </CardContent>
             </div>
 
             {/* Card Footer: Deadline & Quick Link */}
-            <CardFooter className="px-5 py-3.5 mt-2 border-t border-border/50 flex items-center justify-between text-xs bg-muted/20 rounded-b-2xl">
+            <CardFooter className="px-5 py-3 mt-2 border-t border-border/50 flex items-center justify-between text-xs bg-muted/20">
                 <div className={`flex items-center gap-1.5 font-medium ${project.is_overdue ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
                     <Calendar className="size-3.5" />
                     <span>Tenggat: {project.deadline_formatted}</span>
