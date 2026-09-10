@@ -9,10 +9,11 @@ import TaskCard from '@/Components/Tasks/TaskCard';
 import TaskDialog from '@/Components/Tasks/TaskDialog';
 import TaskDetailSheet from '@/Components/Tasks/TaskDetailSheet';
 import TaskDateRangePicker from '@/Components/Tasks/TaskDateRangePicker';
+import KanbanColumn from '@/Components/Tasks/KanbanColumn';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
 import { Progress } from '@/Components/ui/progress';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/Components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import {
     Select,
     SelectContent,
@@ -31,6 +32,20 @@ import {
     AlertDialogTitle,
 } from '@/Components/ui/alert-dialog';
 import {
+    DndContext,
+    DragOverlay,
+    closestCorners,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragStartEvent,
+    DragOverEvent,
+    DragEndEvent,
+} from '@dnd-kit/core';
+import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { toast } from 'sonner';
+import {
     ChevronLeft,
     Calendar,
     CheckCircle2,
@@ -41,11 +56,8 @@ import {
     Plus,
     Clock,
     Circle,
-    Layers,
-    ListTodo,
     Search,
     X,
-    Filter,
     RotateCcw,
 } from 'lucide-react';
 
@@ -88,13 +100,20 @@ export default function Show({ project, filters, priorities }: ProjectShowProps)
     // Mobile tabs state
     const [activeTab, setActiveTab] = useState<string>('all');
 
-    // Group tasks by status
-    const allTasks = project.tasks || [];
-    const todoTasks = allTasks.filter((t) => t.status === 'todo');
-    const inProgressTasks = allTasks.filter((t) => t.status === 'in_progress');
-    const doneTasks = allTasks.filter((t) => t.status === 'done');
+    // Tasks state with optimistic local support
+    const [tasks, setTasks] = useState<Task[]>(project.tasks || []);
+    const [activeTask, setActiveTask] = useState<Task | null>(null);
 
-    const detailTask = allTasks.find((t) => t.id === detailTaskId) || null;
+    useEffect(() => {
+        setTasks(project.tasks || []);
+    }, [project.tasks]);
+
+    // Group tasks by status
+    const todoTasks = tasks.filter((t) => t.status === 'todo');
+    const inProgressTasks = tasks.filter((t) => t.status === 'in_progress');
+    const doneTasks = tasks.filter((t) => t.status === 'done');
+
+    const detailTask = tasks.find((t) => t.id === detailTaskId) || null;
 
     // Filter application
     const applyFilters = useCallback(
@@ -176,6 +195,138 @@ export default function Show({ project, filters, priorities }: ProjectShowProps)
         deadlineTo
     );
 
+    // Dnd-kit Sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 5,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragStart = (event: DragStartEvent) => {
+        const { active } = event;
+        const task = tasks.find((t) => t.id === Number(active.id));
+        if (task) {
+            setActiveTask(task);
+        }
+    };
+
+    const handleDragOver = (event: DragOverEvent) => {
+        const { active, over } = event;
+        if (!over) return;
+
+        const activeId = Number(active.id);
+        const overId = over.id;
+
+        const activeTaskItem = tasks.find((t) => t.id === activeId);
+        if (!activeTaskItem) return;
+
+        // Check if dropped over another task
+        const overTaskItem = tasks.find((t) => t.id === Number(overId));
+
+        if (overTaskItem) {
+            if (activeTaskItem.status !== overTaskItem.status) {
+                setTasks((prevTasks) => {
+                    const activeIndex = prevTasks.findIndex((t) => t.id === activeId);
+                    const overIndex = prevTasks.findIndex((t) => t.id === Number(overId));
+
+                    const updated = [...prevTasks];
+                    updated[activeIndex] = {
+                        ...updated[activeIndex],
+                        status: overTaskItem.status,
+                    };
+
+                    return arrayMove(updated, activeIndex, overIndex);
+                });
+            }
+        } else {
+            // Check if dropped directly over a column
+            const isOverColumn = ['todo', 'in_progress', 'done'].includes(String(overId));
+            if (isOverColumn) {
+                const newStatus = String(overId) as TaskStatusType;
+                if (activeTaskItem.status !== newStatus) {
+                    setTasks((prevTasks) => {
+                        const activeIndex = prevTasks.findIndex((t) => t.id === activeId);
+                        const updated = [...prevTasks];
+                        updated[activeIndex] = {
+                            ...updated[activeIndex],
+                            status: newStatus,
+                        };
+                        return arrayMove(updated, activeIndex, updated.length - 1);
+                    });
+                }
+            }
+        }
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        setActiveTask(null);
+
+        if (!over) return;
+
+        const activeId = Number(active.id);
+        const overId = over.id;
+
+        const activeTaskItem = tasks.find((t) => t.id === activeId);
+        if (!activeTaskItem) return;
+
+        const overTaskItem = tasks.find((t) => t.id === Number(overId));
+        const previousSnapshot = [...tasks];
+
+        let finalTasks = [...tasks];
+
+        if (overTaskItem) {
+            const activeIndex = finalTasks.findIndex((t) => t.id === activeId);
+            const overIndex = finalTasks.findIndex((t) => t.id === Number(overId));
+
+            if (activeIndex !== overIndex || activeTaskItem.status !== overTaskItem.status) {
+                finalTasks[activeIndex] = {
+                    ...finalTasks[activeIndex],
+                    status: overTaskItem.status,
+                };
+                finalTasks = arrayMove(finalTasks, activeIndex, overIndex);
+            }
+        } else {
+            const isOverColumn = ['todo', 'in_progress', 'done'].includes(String(overId));
+            if (isOverColumn) {
+                const newStatus = String(overId) as TaskStatusType;
+                const activeIndex = finalTasks.findIndex((t) => t.id === activeId);
+                finalTasks[activeIndex] = {
+                    ...finalTasks[activeIndex],
+                    status: newStatus,
+                };
+            }
+        }
+
+        // Apply updated order indices
+        const reorderedPayload = finalTasks.map((t, index) => ({
+            id: t.id,
+            status: t.status,
+            order: index,
+        }));
+
+        setTasks(finalTasks);
+
+        // Send reorder request to backend
+        router.post(
+            route('tasks.reorder', project.id),
+            { tasks: reorderedPayload },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onError: () => {
+                    setTasks(previousSnapshot);
+                    toast.error('Gagal memperbarui urutan tugas.');
+                },
+            }
+        );
+    };
+
     const handleDeleteProject = () => {
         setIsDeletingProject(true);
         router.delete(route('projects.destroy', project.id), {
@@ -219,74 +370,23 @@ export default function Show({ project, filters, priorities }: ProjectShowProps)
     };
 
     const handleTaskStatusChange = (task: Task, newStatus: TaskStatusType) => {
+        const previousSnapshot = [...tasks];
+
+        setTasks((prev) =>
+            prev.map((t) => (t.id === task.id ? { ...t, status: newStatus } : t))
+        );
+
         router.patch(
             route('tasks.update-status', task.id),
             { status: newStatus },
             {
                 preserveScroll: true,
+                preserveState: true,
+                onError: () => {
+                    setTasks(previousSnapshot);
+                    toast.error('Gagal memperbarui status tugas.');
+                },
             }
-        );
-    };
-
-    const renderColumn = (
-        title: string,
-        status: TaskStatusType,
-        tasks: Task[],
-        dotColor: string,
-        icon: React.ReactNode
-    ) => {
-        return (
-            <div className="flex flex-col bg-muted/30 border border-border/70 rounded-2xl p-4 space-y-3 min-h-[400px]">
-                {/* Column Header */}
-                <div className="flex items-center justify-between pb-3 border-b border-border/60">
-                    <div className="flex items-center gap-2">
-                        {icon}
-                        <h3 className="font-heading font-semibold text-sm text-foreground">{title}</h3>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-muted font-bold text-muted-foreground">
-                            {tasks.length}
-                        </span>
-                    </div>
-
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleCreateTask(status)}
-                        className="size-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
-                        title={`Tambah tugas ke ${title}`}
-                    >
-                        <Plus className="size-4" />
-                    </Button>
-                </div>
-
-                {/* Task Cards List */}
-                <div className="flex-1 space-y-3 overflow-y-auto max-h-[calc(100vh-380px)] pr-0.5">
-                    {tasks.length > 0 ? (
-                        tasks.map((task) => (
-                            <TaskCard
-                                key={task.id}
-                                task={task}
-                                onClick={handleViewTaskDetail}
-                                onEdit={handleEditTask}
-                                onDelete={handleDeleteTaskClick}
-                                onStatusChange={handleTaskStatusChange}
-                            />
-                        ))
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-12 text-center rounded-xl border border-dashed border-border/70 bg-card/40 space-y-2">
-                            <p className="text-xs text-muted-foreground">Belum ada tugas</p>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleCreateTask(status)}
-                                className="rounded-lg text-xs h-7 px-2.5"
-                            >
-                                <Plus className="size-3 mr-1" />
-                                Tambah
-                            </Button>
-                        </div>
-                    )}
-                </div>
-            </div>
         );
     };
 
@@ -398,7 +498,7 @@ export default function Show({ project, filters, priorities }: ProjectShowProps)
                             <Kanban className="size-5 text-primary" />
                             <h2 className="font-heading text-lg font-bold text-foreground">Board Kanban</h2>
                             <span className="text-xs text-muted-foreground font-medium">
-                                ({allTasks.length} tugas{isFiltered ? ' hasil filter' : ''})
+                                ({tasks.length} tugas{isFiltered ? ' hasil filter' : ''})
                             </span>
                         </div>
 
@@ -481,47 +581,142 @@ export default function Show({ project, filters, priorities }: ProjectShowProps)
                         )}
                     </div>
 
-                    {/* Desktop 3-Column View */}
-                    <div className="hidden md:grid md:grid-cols-3 gap-6">
-                        {renderColumn(
-                            'To-do',
-                            'todo',
-                            todoTasks,
-                            'bg-slate-400',
-                            <Circle className="size-4 text-slate-500" />
-                        )}
-                        {renderColumn(
-                            'In Progress',
-                            'in_progress',
-                            inProgressTasks,
-                            'bg-amber-500',
-                            <Clock className="size-4 text-amber-500" />
-                        )}
-                        {renderColumn(
-                            'Done',
-                            'done',
-                            doneTasks,
-                            'bg-emerald-500',
-                            <CheckCircle2 className="size-4 text-emerald-500" />
-                        )}
-                    </div>
+                    {/* DndContext Interactive Kanban Columns */}
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCorners}
+                        onDragStart={handleDragStart}
+                        onDragOver={handleDragOver}
+                        onDragEnd={handleDragEnd}
+                    >
+                        {/* Desktop 3-Column View */}
+                        <div className="hidden md:grid md:grid-cols-3 gap-6">
+                            <KanbanColumn
+                                title="To-do"
+                                status="todo"
+                                tasks={todoTasks}
+                                icon={<Circle className="size-4 text-slate-500" />}
+                                onAddTask={handleCreateTask}
+                                onCardClick={handleViewTaskDetail}
+                                onCardEdit={handleEditTask}
+                                onCardDelete={handleDeleteTaskClick}
+                                onCardStatusChange={handleTaskStatusChange}
+                            />
+                            <KanbanColumn
+                                title="In Progress"
+                                status="in_progress"
+                                tasks={inProgressTasks}
+                                icon={<Clock className="size-4 text-amber-500" />}
+                                onAddTask={handleCreateTask}
+                                onCardClick={handleViewTaskDetail}
+                                onCardEdit={handleEditTask}
+                                onCardDelete={handleDeleteTaskClick}
+                                onCardStatusChange={handleTaskStatusChange}
+                            />
+                            <KanbanColumn
+                                title="Done"
+                                status="done"
+                                tasks={doneTasks}
+                                icon={<CheckCircle2 className="size-4 text-emerald-500" />}
+                                onAddTask={handleCreateTask}
+                                onCardClick={handleViewTaskDetail}
+                                onCardEdit={handleEditTask}
+                                onCardDelete={handleDeleteTaskClick}
+                                onCardStatusChange={handleTaskStatusChange}
+                            />
+                        </div>
 
-                    {/* Mobile View with Tabs / Filter */}
-                    <div className="md:hidden">
-                        {activeTab === 'all' ? (
-                            <div className="space-y-6">
-                                {renderColumn('To-do', 'todo', todoTasks, 'bg-slate-400', <Circle className="size-4 text-slate-500" />)}
-                                {renderColumn('In Progress', 'in_progress', inProgressTasks, 'bg-amber-500', <Clock className="size-4 text-amber-500" />)}
-                                {renderColumn('Done', 'done', doneTasks, 'bg-emerald-500', <CheckCircle2 className="size-4 text-emerald-500" />)}
-                            </div>
-                        ) : activeTab === 'todo' ? (
-                            renderColumn('To-do', 'todo', todoTasks, 'bg-slate-400', <Circle className="size-4 text-slate-500" />)
-                        ) : activeTab === 'in_progress' ? (
-                            renderColumn('In Progress', 'in_progress', inProgressTasks, 'bg-amber-500', <Clock className="size-4 text-amber-500" />)
-                        ) : (
-                            renderColumn('Done', 'done', doneTasks, 'bg-emerald-500', <CheckCircle2 className="size-4 text-emerald-500" />)
-                        )}
-                    </div>
+                        {/* Mobile View with Tabs / Filter */}
+                        <div className="md:hidden">
+                            {activeTab === 'all' ? (
+                                <div className="space-y-6">
+                                    <KanbanColumn
+                                        title="To-do"
+                                        status="todo"
+                                        tasks={todoTasks}
+                                        icon={<Circle className="size-4 text-slate-500" />}
+                                        onAddTask={handleCreateTask}
+                                        onCardClick={handleViewTaskDetail}
+                                        onCardEdit={handleEditTask}
+                                        onCardDelete={handleDeleteTaskClick}
+                                        onCardStatusChange={handleTaskStatusChange}
+                                    />
+                                    <KanbanColumn
+                                        title="In Progress"
+                                        status="in_progress"
+                                        tasks={inProgressTasks}
+                                        icon={<Clock className="size-4 text-amber-500" />}
+                                        onAddTask={handleCreateTask}
+                                        onCardClick={handleViewTaskDetail}
+                                        onCardEdit={handleEditTask}
+                                        onCardDelete={handleDeleteTaskClick}
+                                        onCardStatusChange={handleTaskStatusChange}
+                                    />
+                                    <KanbanColumn
+                                        title="Done"
+                                        status="done"
+                                        tasks={doneTasks}
+                                        icon={<CheckCircle2 className="size-4 text-emerald-500" />}
+                                        onAddTask={handleCreateTask}
+                                        onCardClick={handleViewTaskDetail}
+                                        onCardEdit={handleEditTask}
+                                        onCardDelete={handleDeleteTaskClick}
+                                        onCardStatusChange={handleTaskStatusChange}
+                                    />
+                                </div>
+                            ) : activeTab === 'todo' ? (
+                                <KanbanColumn
+                                    title="To-do"
+                                    status="todo"
+                                    tasks={todoTasks}
+                                    icon={<Circle className="size-4 text-slate-500" />}
+                                    onAddTask={handleCreateTask}
+                                    onCardClick={handleViewTaskDetail}
+                                    onCardEdit={handleEditTask}
+                                    onCardDelete={handleDeleteTaskClick}
+                                    onCardStatusChange={handleTaskStatusChange}
+                                />
+                            ) : activeTab === 'in_progress' ? (
+                                <KanbanColumn
+                                    title="In Progress"
+                                    status="in_progress"
+                                    tasks={inProgressTasks}
+                                    icon={<Clock className="size-4 text-amber-500" />}
+                                    onAddTask={handleCreateTask}
+                                    onCardClick={handleViewTaskDetail}
+                                    onCardEdit={handleEditTask}
+                                    onCardDelete={handleDeleteTaskClick}
+                                    onCardStatusChange={handleTaskStatusChange}
+                                />
+                            ) : (
+                                <KanbanColumn
+                                    title="Done"
+                                    status="done"
+                                    tasks={doneTasks}
+                                    icon={<CheckCircle2 className="size-4 text-emerald-500" />}
+                                    onAddTask={handleCreateTask}
+                                    onCardClick={handleViewTaskDetail}
+                                    onCardEdit={handleEditTask}
+                                    onCardDelete={handleDeleteTaskClick}
+                                    onCardStatusChange={handleTaskStatusChange}
+                                />
+                            )}
+                        </div>
+
+                        {/* DragOverlay for visual elevation when dragging */}
+                        <DragOverlay>
+                            {activeTask ? (
+                                <div className="rotate-2 scale-105 opacity-90 shadow-2xl rounded-2xl cursor-grabbing">
+                                    <TaskCard
+                                        task={activeTask}
+                                        onClick={() => {}}
+                                        onEdit={() => {}}
+                                        onDelete={() => {}}
+                                    />
+                                </div>
+                            ) : null}
+                        </DragOverlay>
+                    </DndContext>
                 </div>
             </div>
 

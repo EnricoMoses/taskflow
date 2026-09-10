@@ -12,6 +12,7 @@ use App\Models\Task;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Enum;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -162,6 +163,32 @@ class TaskController extends Controller
         $task->update($validated);
 
         return redirect()->back()->with('success', "Status tugas berhasil diperbarui.");
+    }
+
+    /**
+     * Batch reorder tasks within a project (for drag-and-drop moves across or within columns).
+     */
+    public function reorder(Request $request, Project $project): RedirectResponse
+    {
+        $this->authorize('update', $project);
+
+        $validated = $request->validate([
+            'tasks' => ['required', 'array'],
+            'tasks.*.id' => ['required', 'integer', 'exists:tasks,id'],
+            'tasks.*.status' => ['required', new Enum(TaskStatus::class)],
+            'tasks.*.order' => ['required', 'integer', 'min:0'],
+        ]);
+
+        DB::transaction(function () use ($validated, $project) {
+            foreach ($validated['tasks'] as $item) {
+                $project->tasks()->where('id', $item['id'])->update([
+                    'status' => $item['status'],
+                    'order' => $item['order'],
+                ]);
+            }
+        });
+
+        return redirect()->back()->with('success', "Urutan tugas berhasil diperbarui.");
     }
 
     /**

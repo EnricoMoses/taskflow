@@ -28,6 +28,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Tasks routes
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
     Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('tasks.store');
+    Route::post('/projects/{project}/tasks/reorder', [TaskController::class, 'reorder'])->name('tasks.reorder');
     Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.update-status');
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
