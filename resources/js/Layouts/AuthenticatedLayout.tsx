@@ -24,6 +24,7 @@ import {
 } from '@/Components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/Components/ui/avatar';
 import { Button } from '@/Components/ui/button';
+import ThemeToggle from '@/Components/ThemeToggle';
 
 export default function AuthenticatedLayout({
     header,
@@ -116,7 +117,9 @@ export default function AuthenticatedLayout({
                         </div>
 
                         {/* Right: User Profile & Actions */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            <ThemeToggle />
+
                             <div className="hidden md:flex items-center">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-muted/80 transition-colors outline-none cursor-pointer">
