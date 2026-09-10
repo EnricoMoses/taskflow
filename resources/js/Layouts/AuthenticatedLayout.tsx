@@ -11,7 +11,8 @@ import {
     User, 
     LogOut,
     CheckSquare2,
-    ChevronDown
+    ChevronDown,
+    ListTodo,
 } from 'lucide-react';
 import { 
     DropdownMenu, 
@@ -99,6 +100,17 @@ export default function AuthenticatedLayout({
                                 >
                                     <FolderKanban className="size-4" />
                                     Projects
+                                </Link>
+                                <Link
+                                    href={route('tasks.index')}
+                                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                        isCurrent('tasks.*')
+                                            ? 'bg-primary/10 text-primary font-semibold'
+                                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                    }`}
+                                >
+                                    <ListTodo className="size-4" />
+                                    All Tasks
                                 </Link>
                             </nav>
                         </div>
@@ -192,6 +204,18 @@ export default function AuthenticatedLayout({
                             >
                                 <FolderKanban className="size-4" />
                                 Projects
+                            </Link>
+                            <Link
+                                href={route('tasks.index')}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium ${
+                                    isCurrent('tasks.*')
+                                        ? 'bg-primary/10 text-primary font-semibold'
+                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                }`}
+                            >
+                                <ListTodo className="size-4" />
+                                All Tasks
                             </Link>
                         </nav>
                         <div className="border-t border-border pt-3">

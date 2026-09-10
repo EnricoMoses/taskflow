@@ -1,16 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Project } from '@/types/project';
-import { Task, TaskStatusType } from '@/types/task';
+import { Task, TaskStatusType, TaskPriorityType } from '@/types/task';
 import ProjectStatusBadge from '@/Components/Projects/ProjectStatusBadge';
 import ProjectDialog from '@/Components/Projects/ProjectDialog';
 import TaskCard from '@/Components/Tasks/TaskCard';
 import TaskDialog from '@/Components/Tasks/TaskDialog';
 import TaskDetailSheet from '@/Components/Tasks/TaskDetailSheet';
+import TaskDateRangePicker from '@/Components/Tasks/TaskDateRangePicker';
 import { Button } from '@/Components/ui/button';
+import { Input } from '@/Components/ui/input';
 import { Progress } from '@/Components/ui/progress';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/Components/ui/tabs';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/Components/ui/select';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -33,14 +42,26 @@ import {
     Clock,
     Circle,
     Layers,
-    ListTodo
+    ListTodo,
+    Search,
+    X,
+    Filter,
+    RotateCcw,
 } from 'lucide-react';
 
 interface ProjectShowProps {
     project: Project;
+    filters?: {
+        search?: string;
+        priority?: string;
+        deadline_preset?: string;
+        deadline_from?: string;
+        deadline_to?: string;
+    };
+    priorities?: { value: string; label: string }[];
 }
 
-export default function Show({ project }: ProjectShowProps) {
+export default function Show({ project, filters, priorities }: ProjectShowProps) {
     // Project modal state
     const [projectDialogOpen, setProjectDialogOpen] = useState(false);
     const [projectDeleteAlertOpen, setProjectDeleteAlertOpen] = useState(false);
@@ -57,6 +78,13 @@ export default function Show({ project }: ProjectShowProps) {
     const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
     const [isDeletingTask, setIsDeletingTask] = useState(false);
 
+    // Filter states
+    const [search, setSearch] = useState(filters?.search || '');
+    const [priority, setPriority] = useState(filters?.priority || 'all');
+    const [deadlinePreset, setDeadlinePreset] = useState(filters?.deadline_preset || 'all');
+    const [deadlineFrom, setDeadlineFrom] = useState(filters?.deadline_from || '');
+    const [deadlineTo, setDeadlineTo] = useState(filters?.deadline_to || '');
+
     // Mobile tabs state
     const [activeTab, setActiveTab] = useState<string>('all');
 
@@ -67,6 +95,86 @@ export default function Show({ project }: ProjectShowProps) {
     const doneTasks = allTasks.filter((t) => t.status === 'done');
 
     const detailTask = allTasks.find((t) => t.id === detailTaskId) || null;
+
+    // Filter application
+    const applyFilters = useCallback(
+        (updated: Record<string, any>) => {
+            const params: Record<string, any> = {
+                search: search || undefined,
+                priority: priority !== 'all' ? priority : undefined,
+                deadline_preset: deadlinePreset !== 'all' ? deadlinePreset : undefined,
+                deadline_from: deadlineFrom || undefined,
+                deadline_to: deadlineTo || undefined,
+                ...updated,
+            };
+
+            Object.keys(params).forEach((key) => {
+                if (params[key] === undefined || params[key] === '' || params[key] === 'all') {
+                    delete params[key];
+                }
+            });
+
+            router.get(route('projects.show', project.id), params, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        },
+        [project.id, search, priority, deadlinePreset, deadlineFrom, deadlineTo]
+    );
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (search !== (filters?.search || '')) {
+                applyFilters({ search: search || undefined });
+            }
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [search, filters?.search, applyFilters]);
+
+    const handlePriorityChange = (val: string | null) => {
+        const nextVal = val || 'all';
+        setPriority(nextVal);
+        applyFilters({ priority: nextVal !== 'all' ? nextVal : undefined });
+    };
+
+    const handleDateRangeChange = ({ preset, from, to }: { preset: string; from: string; to: string }) => {
+        setDeadlinePreset(preset);
+        setDeadlineFrom(from);
+        setDeadlineTo(to);
+        applyFilters({
+            deadline_preset: preset !== 'all' ? preset : undefined,
+            deadline_from: from || undefined,
+            deadline_to: to || undefined,
+        });
+    };
+
+    const handleResetFilters = () => {
+        setSearch('');
+        setPriority('all');
+        setDeadlinePreset('all');
+        setDeadlineFrom('');
+        setDeadlineTo('');
+
+        router.get(
+            route('projects.show', project.id),
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            }
+        );
+    };
+
+    const isFiltered = Boolean(
+        search ||
+        (priority && priority !== 'all') ||
+        (deadlinePreset && deadlinePreset !== 'all') ||
+        deadlineFrom ||
+        deadlineTo
+    );
 
     const handleDeleteProject = () => {
         setIsDeletingProject(true);
@@ -290,7 +398,7 @@ export default function Show({ project }: ProjectShowProps) {
                             <Kanban className="size-5 text-primary" />
                             <h2 className="font-heading text-lg font-bold text-foreground">Board Kanban</h2>
                             <span className="text-xs text-muted-foreground font-medium">
-                                ({allTasks.length} total tugas)
+                                ({allTasks.length} tugas{isFiltered ? ' hasil filter' : ''})
                             </span>
                         </div>
 
@@ -305,6 +413,72 @@ export default function Show({ project }: ProjectShowProps) {
                                 </TabsList>
                             </Tabs>
                         </div>
+                    </div>
+
+                    {/* Compact Filter Bar */}
+                    <div className="bg-card border border-border/70 rounded-2xl p-3 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-[260px]">
+                            {/* Search */}
+                            <div className="relative flex-1 min-w-[180px] max-w-xs">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+                                <Input
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Cari tugas di board..."
+                                    className="pl-8 pr-7 h-8 text-xs rounded-xl border-border/80"
+                                />
+                                {search && (
+                                    <button
+                                        onClick={() => setSearch('')}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+                                    >
+                                        <X className="size-3" />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Priority Filter */}
+                            <Select value={priority} onValueChange={handlePriorityChange}>
+                                <SelectTrigger className="h-8 rounded-xl text-xs border-border/80 w-[130px]">
+                                    <SelectValue placeholder="Prioritas" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl">
+                                    <SelectItem value="all">Semua Prioritas</SelectItem>
+                                    {priorities?.map((p) => (
+                                        <SelectItem key={p.value} value={p.value}>
+                                            {p.label}
+                                        </SelectItem>
+                                    )) || (
+                                        <>
+                                            <SelectItem value="low">Rendah</SelectItem>
+                                            <SelectItem value="medium">Sedang</SelectItem>
+                                            <SelectItem value="high">Tinggi</SelectItem>
+                                        </>
+                                    )}
+                                </SelectContent>
+                            </Select>
+
+                            {/* Date Range Picker */}
+                            <TaskDateRangePicker
+                                preset={deadlinePreset}
+                                from={deadlineFrom}
+                                to={deadlineTo}
+                                onChange={handleDateRangeChange}
+                                className="h-8 text-xs"
+                            />
+                        </div>
+
+                        {isFiltered && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleResetFilters}
+                                className="h-8 text-xs text-muted-foreground hover:text-foreground rounded-lg gap-1.5"
+                            >
+                                <RotateCcw className="size-3" />
+                                Reset Filter
+                            </Button>
+                        )}
                     </div>
 
                     {/* Desktop 3-Column View */}

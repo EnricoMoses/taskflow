@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ProjectStatus;
+use App\Enums\TaskPriority;
+use App\Enums\TaskStatus;
 use App\Http\Requests\Project\StoreProjectRequest;
 use App\Http\Requests\Project\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
 use App\Models\Project;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -79,11 +82,40 @@ class ProjectController extends Controller
     }
 
     /**
-     * Display the specified project.
+     * Display the specified project with optionally filtered kanban tasks.
      */
     public function show(Request $request, Project $project): Response
     {
         $this->authorize('view', $project);
+
+        $tasksQuery = function ($q) use ($request) {
+            $q->with('attachments')->withCount('attachments');
+
+            if ($request->filled('search')) {
+                $q->search($request->input('search'));
+            }
+
+            if ($request->filled('priority') && $request->input('priority') !== 'all') {
+                $q->priority($request->input('priority'));
+            }
+
+            if ($request->filled('deadline_preset') && $request->input('deadline_preset') !== 'all') {
+                $preset = $request->input('deadline_preset');
+                if ($preset === 'overdue') {
+                    $q->overdue();
+                } elseif ($preset === 'today') {
+                    $q->whereDate('deadline', Carbon::today());
+                } elseif ($preset === 'this_week') {
+                    $q->whereBetween('deadline', [Carbon::now()->startOfWeek()->toDateString(), Carbon::now()->endOfWeek()->toDateString()]);
+                } elseif ($preset === 'this_month') {
+                    $q->whereBetween('deadline', [Carbon::now()->startOfMonth()->toDateString(), Carbon::now()->endOfMonth()->toDateString()]);
+                }
+            } elseif ($request->filled('deadline_from') || $request->filled('deadline_to')) {
+                $q->deadlineBetween($request->input('deadline_from'), $request->input('deadline_to'));
+            }
+
+            $q->orderBy('order')->orderByDesc('created_at');
+        };
 
         $project->loadCount([
             'tasks as tasks_count',
@@ -91,11 +123,24 @@ class ProjectController extends Controller
             'tasks as in_progress_tasks_count' => fn ($q) => $q->where('status', 'in_progress'),
             'tasks as todo_tasks_count' => fn ($q) => $q->where('status', 'todo'),
         ])->load([
-            'tasks' => fn ($q) => $q->with('attachments')->withCount('attachments')->orderBy('order')->orderByDesc('created_at'),
+            'tasks' => $tasksQuery,
         ]);
+
+        $priorities = array_map(fn (TaskPriority $priority) => [
+            'value' => $priority->value,
+            'label' => $priority->label(),
+        ], TaskPriority::cases());
 
         return Inertia::render('Projects/Show', [
             'project' => (new ProjectResource($project))->resolve(),
+            'filters' => [
+                'search' => $request->input('search', ''),
+                'priority' => $request->input('priority', 'all'),
+                'deadline_preset' => $request->input('deadline_preset', 'all'),
+                'deadline_from' => $request->input('deadline_from', ''),
+                'deadline_to' => $request->input('deadline_to', ''),
+            ],
+            'priorities' => $priorities,
         ]);
     }
 

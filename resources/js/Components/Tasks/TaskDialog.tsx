@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -39,7 +39,8 @@ type TaskFormValues = z.infer<typeof taskSchema>;
 interface TaskDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    projectId: number;
+    projectId?: number;
+    projects?: { id: number; name: string }[];
     task?: Task | null;
     defaultStatus?: TaskStatusType;
 }
@@ -47,11 +48,15 @@ interface TaskDialogProps {
 export default function TaskDialog({
     open,
     onOpenChange,
-    projectId,
+    projectId: initialProjectId,
+    projects,
     task,
     defaultStatus = 'todo',
 }: TaskDialogProps) {
     const isEdit = !!task;
+    const [selectedProjectId, setSelectedProjectId] = useState<number | undefined>(
+        initialProjectId || task?.project_id || (projects && projects.length > 0 ? projects[0].id : undefined)
+    );
 
     const {
         register,
@@ -85,6 +90,7 @@ export default function TaskDialog({
                     status: task.status,
                     priority: task.priority,
                 });
+                setSelectedProjectId(task.project_id);
             } else {
                 reset({
                     title: '',
@@ -93,9 +99,10 @@ export default function TaskDialog({
                     status: defaultStatus,
                     priority: 'medium',
                 });
+                setSelectedProjectId(initialProjectId || (projects && projects.length > 0 ? projects[0].id : undefined));
             }
         }
-    }, [open, task, defaultStatus, reset]);
+    }, [open, task, defaultStatus, initialProjectId, projects, reset]);
 
     const onSubmit = (values: TaskFormValues) => {
         const payload = {
@@ -119,7 +126,10 @@ export default function TaskDialog({
                 },
             });
         } else {
-            router.post(route('tasks.store', projectId), payload, {
+            const targetProjectId = initialProjectId || selectedProjectId;
+            if (!targetProjectId) return;
+
+            router.post(route('tasks.store', targetProjectId), payload, {
                 preserveScroll: true,
                 onSuccess: () => {
                     reset();
@@ -152,6 +162,32 @@ export default function TaskDialog({
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
+                    {/* Project Selector (if creating from All Tasks) */}
+                    {!isEdit && !initialProjectId && projects && projects.length > 0 && (
+                        <div className="space-y-1.5">
+                            <Label htmlFor="task-project" className="text-xs font-semibold">
+                                Proyek <span className="text-destructive">*</span>
+                            </Label>
+                            <Select
+                                value={selectedProjectId ? String(selectedProjectId) : ''}
+                                onValueChange={(val) => {
+                                    if (val) setSelectedProjectId(Number(val));
+                                }}
+                            >
+                                <SelectTrigger id="task-project" className="rounded-xl w-full">
+                                    <SelectValue placeholder="Pilih Proyek..." />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl">
+                                    {projects.map((p) => (
+                                        <SelectItem key={p.id} value={String(p.id)}>
+                                            {p.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
                     {/* Task Title */}
                     <div className="space-y-1.5">
                         <Label htmlFor="task-title" className="text-xs font-semibold">
