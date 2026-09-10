@@ -104,7 +104,7 @@ export default function AuthenticatedLayout({
     };
 
     return (
-        <div className="min-h-screen bg-slate-50/60 dark:bg-background text-foreground flex font-sans selection:bg-primary/20 selection:text-primary">
+        <div className="min-h-screen bg-slate-50/60 dark:bg-background text-foreground flex font-sans">
             <Toaster richColors position="top-right" />
 
             {/* Desktop Left Sidebar */}

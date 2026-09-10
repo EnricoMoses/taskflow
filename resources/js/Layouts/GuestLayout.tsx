@@ -5,7 +5,7 @@ import ThemeToggle from '@/Components/ThemeToggle';
 
 export default function Guest({ children }: PropsWithChildren) {
     return (
-        <div className="relative min-h-screen flex flex-col items-center justify-center bg-background text-foreground px-4 py-8 selection:bg-primary/20 selection:text-primary">
+        <div className="relative min-h-screen flex flex-col items-center justify-center bg-background text-foreground px-4 py-8">
             {/* Top Right Theme Toggle */}
             <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
                 <ThemeToggle />

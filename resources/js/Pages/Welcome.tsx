@@ -8,7 +8,7 @@ export default function Welcome({
     auth,
 }: PageProps) {
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary">
+        <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
             <Head title="TaskFlow - Modern Project & Task Management" />
 
             {/* Top Navigation Bar */}

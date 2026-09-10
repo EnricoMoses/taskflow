@@ -98,6 +98,29 @@
 }
 
 /* ==========================================================================
+   Global Text Selection Highlight
+   ========================================================================== */
+::selection {
+  background-color: #0284c7 !important;
+  color: #ffffff !important;
+}
+
+::-moz-selection {
+  background-color: #0284c7 !important;
+  color: #ffffff !important;
+}
+
+.dark ::selection {
+  background-color: #0284c7 !important;
+  color: #ffffff !important;
+}
+
+.dark ::-moz-selection {
+  background-color: #0284c7 !important;
+  color: #ffffff !important;
+}
+
+/* ==========================================================================
    Custom Minimalist Pill Scrollbar (Matching Reference Design)
    ========================================================================== */
 
