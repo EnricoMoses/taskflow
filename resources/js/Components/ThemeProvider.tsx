@@ -12,6 +12,7 @@ interface ThemeContextType {
     theme: Theme;
     resolvedTheme: 'light' | 'dark';
     setTheme: (theme: Theme) => void;
+    toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -24,40 +25,50 @@ export function ThemeProvider({
     const [theme, setThemeState] = useState<Theme>(() => {
         if (typeof window !== 'undefined') {
             try {
-                return (localStorage.getItem(storageKey) as Theme) || defaultTheme;
-            } catch {
-                return defaultTheme;
-            }
+                const stored = localStorage.getItem(storageKey);
+                if (stored === 'light' || stored === 'dark' || stored === 'system') {
+                    return stored;
+                }
+            } catch {}
         }
         return defaultTheme;
     });
 
-    const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+    const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                const stored = localStorage.getItem(storageKey);
+                if (stored === 'dark') return 'dark';
+                if (stored === 'light') return 'light';
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            } catch {}
+        }
+        return 'light';
+    });
 
     useEffect(() => {
         const root = document.documentElement;
 
-        const applyTheme = () => {
-            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-                ? 'dark'
-                : 'light';
+        const updateTheme = () => {
+            const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const isDark = theme === 'dark' || (theme === 'system' && systemIsDark);
+            const active: 'light' | 'dark' = isDark ? 'dark' : 'light';
 
-            const activeTheme = theme === 'system' ? systemTheme : theme;
-            setResolvedTheme(activeTheme);
+            setResolvedTheme(active);
 
-            if (activeTheme === 'dark') {
+            if (isDark) {
                 root.classList.add('dark');
             } else {
                 root.classList.remove('dark');
             }
         };
 
-        applyTheme();
+        updateTheme();
 
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         const handleChange = () => {
             if (theme === 'system') {
-                applyTheme();
+                updateTheme();
             }
         };
 
@@ -72,8 +83,13 @@ export function ThemeProvider({
         setThemeState(newTheme);
     };
 
+    const toggleTheme = () => {
+        const newTheme = resolvedTheme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+    };
+
     return (
-        <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
+        <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme, toggleTheme }}>
             {children}
         </ThemeContext.Provider>
     );
